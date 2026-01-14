@@ -44,18 +44,36 @@ class GeminiLLM:
             temperature=temperature
         )
     
-    def get_response(self, prompt):
+    def get_response(self, prompt, conversation_history=None):
         """
         Get a response from the Gemini model.
         
         Args:
             prompt: User's input message
+            conversation_history: List of previous messages (optional)
             
         Returns:
             str: Model's response
         """
         try:
-            response = self.llm.invoke(prompt)
+            # If conversation history is provided, format it
+            if conversation_history:
+                # Build messages list with history
+                from langchain_core.messages import HumanMessage, AIMessage
+                messages = []
+                for msg in conversation_history:
+                    if msg["role"] == "user":
+                        messages.append(HumanMessage(content=msg["content"]))
+                    elif msg["role"] == "assistant":
+                        messages.append(AIMessage(content=msg["content"]))
+                
+                # Add current prompt
+                messages.append(HumanMessage(content=prompt))
+                response = self.llm.invoke(messages)
+            else:
+                # No history, just send the prompt
+                response = self.llm.invoke(prompt)
+            
             return response.content
         except Exception as e:
             raise Exception(f"Error getting response from Gemini: {str(e)}")

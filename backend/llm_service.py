@@ -5,12 +5,16 @@ Handles LLM calls using LangChain and Google Gemini.
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from typing import List, Dict
 
-load_dotenv()
+# Force reload environment variables from project root
+project_root = Path(__file__).parent.parent
+env_path = project_root / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 
 
 class GeminiLLM:

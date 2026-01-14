@@ -15,19 +15,19 @@ from datetime import timedelta, datetime
 from typing import List
 import os
 
-from database import get_db, init_db
-from models import User, Conversation, ChatMessage
-from schemas import (
+from backend.database import get_db, init_db
+from backend.models import User, Conversation, ChatMessage
+from backend.schemas import (
     UserLogin, UserResponse, Token, TokenData,
     UserCreate, GoogleAuthRequest,
     ConversationCreate, ConversationResponse,
     ChatRequest, ChatMessageResponse, ChatResponse
 )
-from auth import (
+from backend.auth import (
     verify_password, get_password_hash, create_access_token,
     verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 )
-from llm_service import llm_instance
+from backend.llm_service import llm_instance
 
 # Initialize FastAPI app
 app = FastAPI(title="Amzur Chatbot API", version="2.0.0")
@@ -283,6 +283,16 @@ def get_conversations(
     return result
 
 
+# Alias for backwards compatibility
+@app.get("/chats", response_model=List[ConversationResponse])
+def get_chats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Alias for /conversations endpoint."""
+    return get_conversations(current_user, db)
+
+
 @app.post("/conversations", response_model=ConversationResponse)
 def create_conversation(
     conversation: ConversationCreate,
@@ -458,6 +468,8 @@ def send_message(
     try:
         llm_response = llm_instance.get_response(chat_request.message, conversation_history)
     except Exception as e:
+        import traceback
+        traceback.print_exc()  # Print full traceback to console
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"LLM Error: {str(e)}"
