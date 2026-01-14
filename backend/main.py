@@ -78,13 +78,21 @@ def get_current_user(
 # Serve static files (frontend)
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
+# Check if running on Vercel (serverless environment)
+IS_VERCEL = os.getenv('VERCEL', '') != ''
+
 
 # Routes
 
 @app.get("/")
 def root():
     """Serve the frontend HTML."""
-    return FileResponse(os.path.join(frontend_path, "index.html"))
+    if IS_VERCEL:
+        # On Vercel, serve from the correct path
+        html_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
+    else:
+        html_path = os.path.join(frontend_path, "index.html")
+    return FileResponse(html_path)
 
 
 @app.get("/health")
