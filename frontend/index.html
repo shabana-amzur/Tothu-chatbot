@@ -97,7 +97,7 @@
         }
         
         .form-group input:focus {
-            border-color: #0A84FF;
+            border-color: #BB4CF0;
             background: #252525;
         }
         
@@ -107,7 +107,7 @@
         }
         
         .forgot-password a {
-            color: #0A84FF;
+            color: #C263F3;
             text-decoration: none;
             font-size: 13px;
         }
@@ -426,6 +426,15 @@
             width: 100%;
         }
         
+        .message.user {
+            justify-content: flex-start;
+        }
+        
+        .message.assistant {
+            justify-content: flex-end;
+            flex-direction: row-reverse;
+        }
+        
         .message-avatar {
             width: 32px;
             height: 32px;
@@ -584,14 +593,14 @@
         }
         
         .message-content blockquote {
-            border-left: 3px solid #0A84FF;
+            border-left: 3px solid #BB4CF0;
             padding-left: 12px;
             margin: 8px 0;
             color: #8E8E93;
         }
         
         .message-content a {
-            color: #0A84FF;
+            color: #C263F3;
             text-decoration: none;
         }
         
@@ -639,7 +648,7 @@
         }
         
         .back-link {
-            color: #0A84FF;
+            color: #C263F3;
             text-decoration: none;
             font-size: 13px;
             margin-bottom: 16px;
@@ -1306,7 +1315,7 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
             
-            const avatar = role === 'user' ? '👤' : '🤖';
+            const avatar = role === 'user' ? '👤' : '�';
             
             // Parse markdown and render rich content
             const renderedContent = marked.parse(content, {
