@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tothu - AI Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000000;
+            color: #FFFFFF;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Login Page Styles */
+        .login-container {
+            background: #1A1A1A;
+            border-radius: 14px;
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 370px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+        
+        .login-container h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #FFFFFF;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .login-container .subtitle {
+            text-align: center;
+            color: #8E8E93;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        
+        .error-message {
+            background: #3A1A1A;
+            border: 1px solid #FF453A;
+            color: #FF453A;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            text-align: center;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            background: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 8px;
+            padding: 0 14px;
+            height: 42px;
+            color: #FFFFFF;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .form-group input::placeholder {
+            color: #6B6B6B;
+        }
+        
+        .form-group input:focus {
+            border-color: #0A84FF;
+            background: #252525;
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin: -8px 0 16px 0;
+        }
+        
+        .forgot-password a {
+            color: #0A84FF;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            height: 42px;
+            background: #0A84FF;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            gap: 12px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #3A3A3A;
+        }
+        
+        .divider span {
+            color: #6B6B6B;
+            font-size: 13px;
+        }
+        
+        .social-btn {
+            width: 100%;
+            height: 42px;
+            background: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 14px;
+            cursor: not-allowed;
+            opacity: 0.6;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #3A3A3A;
+            color: #8E8E93;
+            font-size: 13px;
+        }
+        
+        .signup-link a {
+            color: #0A84FF;
+            text-decoration: underline;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        
+        .signup-link a:hover {
+            text-decoration: none;
+        }
+        
+        .terms {
+            text-align: center;
+            margin-top: 16px;
+            color: #6B6B6B;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        
+        .terms a {
+            color: #6B6B6B;
+            text-decoration: underline;
+        }
+        
+        /* Chat Page Styles - ChatGPT Layout */
+        .chat-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: row;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        .chat-container.active {
+            display: flex;
+        }
+        
+        /* Sidebar */
+        .chat-sidebar {
+            width: 260px;
+            background: #171717;
+            border-right: 1px solid #2A2A2A;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 12px;
+            border-bottom: 1px solid #2A2A2A;
+        }
+        
+        .new-chat-btn {
+            width: 100%;
+            padding: 10px 12px;
+            background: #2A2A2A;
+            color: #FFFFFF;
+            border: 1px solid #3A3A3A;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        
+        .new-chat-btn:hover {
+            background: #343434;
+        }
+        
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .chat-history-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            position: relative;
+        }
+        
+        .chat-history-item:hover {
+            background: #2A2A2A;
+        }
+        
+        .chat-history-item.active {
+            background: #2A2A2A;
+        }
+        
+        .chat-title {
+            flex: 1;
+            color: #E0E0E0;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .chat-actions {
+            display: none;
+            gap: 4px;
+        }
+        
+        .chat-history-item:hover .chat-actions {
+            display: flex;
+        }
+        
+        .delete-chat-btn {
+            padding: 4px 8px;
+            background: transparent;
+            color: #8E8E93;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .delete-chat-btn:hover {
+            background: #FF453A;
+            color: #FFFFFF;
+        }
+        
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid #2A2A2A;
+        }
+        
+        .clear-conversations-btn {
+            width: 100%;
+            padding: 10px 12px;
+            background: transparent;
+            color: #FF453A;
+            border: 1px solid #3A3A3A;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .clear-conversations-btn:hover {
+            background: #3A1A1A;
+            border-color: #FF453A;
+        }
+        
+        .user-profile {
+            margin-top: 8px;
+            padding: 10px 12px;
+            background: #2A2A2A;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-name {
+            color: #E0E0E0;
+            font-size: 13px;
+        }
+        
+        .logout-btn-sidebar {
+            padding: 6px 12px;
+            background: #FF453A;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000000;
+        }
+        
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #2A2A2A;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h2 {
+            color: #FFFFFF;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .clear-chat-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: #8E8E93;
+            border: 1px solid #3A3A3A;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .clear-chat-btn:hover {
+            background: #2A2A2A;
+            color: #FFFFFF;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .message {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #0A84FF;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #2A2A2A;
+        }
+        
+        .message-content {
+            flex: 1;
+            padding: 12px 0;
+            line-height: 1.6;
+            font-size: 14px;
+            color: #E0E0E0;
+        }
+        
+        .chat-input-container {
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 12px;
+            background: #2A2A2A;
+            border: 1px solid #3A3A3A;
+            border-radius: 12px;
+            padding: 4px;
+            transition: border-color 0.2s;
+        }
+        
+        .chat-input-area:focus-within {
+            border-color: #0A84FF;
+        }
+        
+        .chat-input-area input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 16px;
+            color: #FFFFFF;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .chat-input-area input::placeholder {
+            color: #6B6B6B;
+        }
+        
+        .chat-input-area button {
+            background: #0A84FF;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .chat-input-area button:hover {
+            opacity: 0.85;
+        }
+        
+        .chat-input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #8E8E93;
+            padding: 12px;
+            font-size: 13px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Signup Page */
+        .signup-container {
+            display: none;
+        }
+        
+        .signup-container.active {
+            display: block;
+        }
+        
+        .back-link {
+            color: #0A84FF;
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <h1>🦜 Welcome to Tothu</h1>
+        <p class="subtitle">Unlock smarter responses</p>
+        
+        <div class="error-message" id="loginError"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <div class="forgot-password">
+                <a href="#" id="forgotPasswordLink">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="btn-primary" id="loginBtn">Sign in</button>
+        </form>
+        
+        <div class="divider">
+            <span>or</span>
+        </div>
+        
+        <button class="social-btn" disabled>🔍 Continue with Google</button>
+        <button class="social-btn" disabled>⚫ Continue with GitHub</button>
+        
+        <div class="signup-link">
+            Don't have an account? <a id="showSignup">Sign up</a>
+        </div>
+        
+        <div class="terms">
+            By continuing, you agree to Tothu's<br/>
+            <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+        </div>
+    </div>
+    
+    <!-- Signup Page -->
+    <div class="login-container signup-container" id="signupPage">
+        <a href="#" class="back-link" id="backToLogin">← Back to login</a>
+        
+        <h1>Create Account</h1>
+        <p class="subtitle">Join Tothu to start your AI journey</p>
+        
+        <div class="error-message" id="signupError"></div>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <input type="email" id="signupEmail" placeholder="your.name@amzur.com" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="signupUsername" placeholder="Choose a username" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="signupFullname" placeholder="Your full name" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="signupPassword" placeholder="Create a password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required>
+            </div>
+            
+            <button type="submit" class="btn-primary" id="signupBtn">Create Account</button>
+        </form>
+    </div>
+    
+    <!-- Forgot Password Page -->
+    <div class="login-container signup-container" id="forgotPasswordPage">
+        <a href="#" class="back-link" id="backToLoginFromForgot">← Back to login</a>
+        
+        <h1>Reset Password</h1>
+        <p class="subtitle">Enter your email to reset your password</p>
+        
+        <div class="error-message" id="forgotError"></div>
+        <div class="error-message" id="forgotSuccess" style="background: #1A3A1A; border-color: #34C759; color: #34C759;"></div>
+        
+        <form id="forgotPasswordForm">
+            <div class="form-group">
+                <input type="email" id="forgotEmail" placeholder="your.name@amzur.com" required>
+            </div>
+            
+            <button type="submit" class="btn-primary" id="forgotBtn">Send Reset Link</button>
+        </form>
+        
+        <div class="terms" style="margin-top: 20px;">
+            Remember your password? <a href="#" id="backToLoginLink" style="color: #0A84FF; cursor: pointer;">Sign in</a>
+        </div>
+    </div>
+    
+    <!-- Chat Page -->
+    <div class="chat-container" id="chatPage">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <span>➕</span>
+                    <span>New chat</span>
+                </button>
+            </div>
+            
+            <div class="chat-history" id="chatHistory">
+                <!-- Chat history items will be inserted here -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="clear-conversations-btn" id="clearAllChatsBtn">🗑️ Clear conversations</button>
+                <div class="user-profile">
+                    <span class="user-name" id="userNameSidebar">Loading...</span>
+                    <button class="logout-btn-sidebar" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <h2 id="chatTitle">New Chat</h2>
+                <div class="header-actions">
+                    <button class="clear-chat-btn" id="clearChatBtn">🗑️ Clear chat</button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="messages"></div>
+            <div class="loading hidden" id="loading">AI is thinking...</div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-area">
+                    <input type="text" id="messageInput" placeholder="Send a message..." />
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let token = localStorage.getItem('token');
+        
+        // Page elements
+        const loginPage = document.getElementById('loginPage');
+        const signupPage = document.getElementById('signupPage');
+        const forgotPasswordPage = document.getElementById('forgotPasswordPage');
+        const chatPage = document.getElementById('chatPage');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const showSignup = document.getElementById('showSignup');
+        const backToLogin = document.getElementById('backToLogin');
+        const backToLoginFromForgot = document.getElementById('backToLoginFromForgot');
+        const backToLoginLink = document.getElementById('backToLoginLink');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const messageInput = document.getElementById('messageInput');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const clearAllChatsBtn = document.getElementById('clearAllChatsBtn');
+        const chatHistory = document.getElementById('chatHistory');
+        
+        // Chat state
+        let currentConversationId = null;
+        let conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+        
+        // Initialize
+        if (token) {
+            showChatPage();
+        } else {
+            showLoginPage();
+        }
+        
+        // Login Form Handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            errorDiv.classList.remove('show');
+            errorDiv.textContent = '';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.access_token;
+                    localStorage.setItem('token', token);
+                    showChatPage();
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = '❌ ' + (error.detail || 'Invalid username or password');
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '❌ Connection error. Is the backend running?';
+                errorDiv.classList.add('show');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign in';
+            }
+        });
+        
+        // Forgot Password Form Handler
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value;
+            const errorDiv = document.getElementById('forgotError');
+            const successDiv = document.getElementById('forgotSuccess');
+            const forgotBtn = document.getElementById('forgotBtn');
+            
+            errorDiv.classList.remove('show');
+            errorDiv.textContent = '';
+            successDiv.classList.remove('show');
+            successDiv.textContent = '';
+            
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorDiv.textContent = '⚠️ Please enter a valid email address';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            forgotBtn.disabled = true;
+            forgotBtn.textContent = 'Sending...';
+            
+            try {
+                // TODO: Implement actual password reset endpoint on backend
+                // For now, simulate success after checking if user exists
+                const response = await fetch(`${API_URL}/me`, {
+                    headers: { 'Authorization': `Bearer fake-token` }
+                });
+                
+                // Always show success message for security (don't reveal if email exists)
+                setTimeout(() => {
+                    successDiv.textContent = '✅ If an account exists with this email, you will receive a password reset link shortly.';
+                    successDiv.classList.add('show');
+                    document.getElementById('forgotEmail').value = '';
+                }, 500);
+                
+            } catch (error) {
+                successDiv.textContent = '✅ If an account exists with this email, you will receive a password reset link shortly.';
+                successDiv.classList.add('show');
+                document.getElementById('forgotEmail').value = '';
+            } finally {
+                forgotBtn.disabled = false;
+                forgotBtn.textContent = 'Send Reset Link';
+            }
+        });
+        
+        // Signup Form Handler
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const username = document.getElementById('signupUsername').value;
+            const fullName = document.getElementById('signupFullname').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            const errorDiv = document.getElementById('signupError');
+            const signupBtn = document.getElementById('signupBtn');
+            
+            errorDiv.classList.remove('show');
+            errorDiv.textContent = '';
+            
+            // Validation
+            if (password !== confirmPassword) {
+                errorDiv.textContent = '❌ Passwords do not match';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorDiv.textContent = '⚠️ Password must be at least 6 characters';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating account...';
+            
+            try {
+                const response = await fetch(`${API_URL}/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        username: username,
+                        password: password,
+                        full_name: fullName
+                    })
+                });
+                
+                if (response.ok) {
+                    // Auto login after signup
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+                    
+                    const loginResponse = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (loginResponse.ok) {
+                        const data = await loginResponse.json();
+                        token = data.access_token;
+                        localStorage.setItem('token', token);
+                        showChatPage();
+                    }
+                } else {
+                    const error = await response.json();
+                    errorDiv.textContent = '❌ ' + (error.detail || 'Signup failed');
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '❌ Connection error. Is the backend running?';
+                errorDiv.classList.add('show');
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
+            }
+        });
+        
+        // Navigation
+        showSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginPage.classList.add('hidden');
+            signupPage.classList.add('active');
+            forgotPasswordPage.classList.remove('active');
+        });
+        
+        backToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupPage.classList.remove('active');
+            forgotPasswordPage.classList.remove('active');
+            loginPage.classList.remove('hidden');
+        });
+        
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginPage.classList.add('hidden');
+            signupPage.classList.remove('active');
+            forgotPasswordPage.classList.add('active');
+        });
+        
+        backToLoginFromForgot.addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotPasswordPage.classList.remove('active');
+            loginPage.classList.remove('hidden');
+        });
+        
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotPasswordPage.classList.remove('active');
+            loginPage.classList.remove('hidden');
+        });
+        
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            token = null;
+            showLoginPage();
+        });
+        
+        // Chat Functions
+        function showLoginPage() {
+            loginPage.classList.remove('hidden');
+            signupPage.classList.remove('active');
+            forgotPasswordPage.classList.remove('active');
+            chatPage.classList.remove('active');
+        }
+        
+        async function showChatPage() {
+            loginPage.classList.add('hidden');
+            signupPage.classList.remove('active');
+            forgotPasswordPage.classList.remove('active');
+            chatPage.classList.add('active');
+            
+            await loadUserInfo();
+            await loadChatHistory();
+            
+            // Initialize first conversation if none exist
+            if (conversations.length === 0) {
+                createNewConversation();
+            } else {
+                currentConversationId = conversations[0].id;
+                loadConversation(0);
+            }
+        }
+        
+        async function loadUserInfo() {
+            try {
+                const response = await fetch(`${API_URL}/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('userNameSidebar').textContent = user.full_name || user.username;
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+        
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(`${API_URL}/chats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const messages = await response.json();
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML = '';
+                    
+                    messages.forEach(msg => {
+                        addMessageToUI(msg.role, msg.content);
+                    });
+                    
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+            
+            // Load conversation history for sidebar
+            loadConversationsList();
+        }
+        
+        // Conversation Management
+        function loadConversationsList() {
+            chatHistory.innerHTML = '';
+            conversations.forEach((conv, index) => {
+                const item = document.createElement('div');
+                item.className = 'chat-history-item' + (conv.id === currentConversationId ? ' active' : '');
+                item.innerHTML = `
+                    <span class="chat-title">${conv.title}</span>
+                    <div class="chat-actions">
+                        <button class="delete-chat-btn" onclick="deleteConversation(${index})">🗑️</button>
+                    </div>
+                `;
+                item.onclick = (e) => {
+                    if (!e.target.classList.contains('delete-chat-btn')) {
+                        loadConversation(index);
+                    }
+                };
+                chatHistory.appendChild(item);
+            });
+        }
+        
+        function createNewConversation() {
+            const newConv = {
+                id: Date.now(),
+                title: 'New Chat',
+                messages: []
+            };
+            conversations.unshift(newConv);
+            currentConversationId = newConv.id;
+            localStorage.setItem('conversations', JSON.stringify(conversations));
+            loadConversationsList();
+            clearMessages();
+            document.getElementById('chatTitle').textContent = 'New Chat';
+        }
+        
+        function loadConversation(index) {
+            currentConversationId = conversations[index].id;
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            conversations[index].messages.forEach(msg => {
+                addMessageToUI(msg.role, msg.content);
+            });
+            
+            document.getElementById('chatTitle').textContent = conversations[index].title;
+            loadConversationsList();
+            scrollToBottom();
+        }
+        
+        function deleteConversation(index) {
+            if (confirm('Delete this conversation?')) {
+                const deletedId = conversations[index].id;
+                conversations.splice(index, 1);
+                localStorage.setItem('conversations', JSON.stringify(conversations));
+                
+                if (deletedId === currentConversationId) {
+                    if (conversations.length > 0) {
+                        loadConversation(0);
+                    } else {
+                        createNewConversation();
+                    }
+                }
+                loadConversationsList();
+            }
+        }
+        
+        function clearCurrentChat() {
+            if (confirm('Clear this conversation?')) {
+                const index = conversations.findIndex(c => c.id === currentConversationId);
+                if (index !== -1) {
+                    conversations[index].messages = [];
+                    localStorage.setItem('conversations', JSON.stringify(conversations));
+                    clearMessages();
+                }
+            }
+        }
+        
+        function clearAllConversations() {
+            if (confirm('Delete all conversations? This cannot be undone.')) {
+                conversations = [];
+                localStorage.setItem('conversations', JSON.stringify(conversations));
+                createNewConversation();
+            }
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        function saveMessageToConversation(role, content) {
+            const index = conversations.findIndex(c => c.id === currentConversationId);
+            if (index !== -1) {
+                conversations[index].messages.push({ role, content });
+                
+                // Update title with first user message
+                if (role === 'user' && conversations[index].messages.length === 1) {
+                    conversations[index].title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
+                    document.getElementById('chatTitle').textContent = conversations[index].title;
+                }
+                
+                localStorage.setItem('conversations', JSON.stringify(conversations));
+                loadConversationsList();
+            }
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Create new conversation if needed
+            if (!currentConversationId || conversations.length === 0) {
+                createNewConversation();
+            }
+            
+            addMessageToUI('user', message);
+            saveMessageToConversation('user', message);
+            messageInput.value = '';
+            
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessageToUI('assistant', data.assistant_message.content);
+                    saveMessageToConversation('assistant', data.assistant_message.content);
+                } else {
+                    const errorMsg = 'Sorry, I encountered an error processing your request.';
+                    addMessageToUI('assistant', errorMsg);
+                    saveMessageToConversation('assistant', errorMsg);
+                }
+            } catch (error) {
+                const errorMsg = 'Connection error. Please try again.';
+                addMessageToUI('assistant', errorMsg);
+                saveMessageToConversation('assistant', errorMsg);
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        }
+        
+        function addMessageToUI(role, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const avatar = role === 'user' ? '👤' : '🤖';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">${content}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Event Listeners
+        newChatBtn.addEventListener('click', createNewConversation);
+        clearChatBtn.addEventListener('click', clearCurrentChat);
+        clearAllChatsBtn.addEventListener('click', clearAllConversations);
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
