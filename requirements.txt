@@ -1,28 +1,28 @@
-# Python Chatbot Requirements
-# ----------------------------
-# This file lists all the Python packages needed to run the chatbot.
+# Python Chatbot Requirements - FastAPI Backend
+# ----------------------------------------------
 # Install these packages using: pip install -r requirements.txt
 
-# Streamlit - Web framework for creating the UI
-streamlit>=1.32.0
+# FastAPI - Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
 
-# LangChain - Framework for building LLM applications (compatible versions)
-langchain>=0.3.0
-langchain-core>=0.3.0
-langchain-google-genai>=2.0.0
-
-# Google Generative AI - Official Google library for Gemini API
-google-generativeai>=0.8.0
-
-# Python-dotenv - Load environment variables from .env file
-python-dotenv>=1.0.0
-
-# Core dependencies
-pydantic>=2.5.0
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
 
 # Database - PostgreSQL
 psycopg2-binary>=2.9.0
 sqlalchemy>=2.0.0
 
-# Authentication
-bcrypt>=4.0.0
+# Core dependencies
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+
+# LangChain - Framework for LLM applications (minimal version)
+langchain-core>=0.3.0
+langchain-google-genai>=2.0.0
+
+# Google Generative AI - For Gemini API
+google-generativeai>=0.8.0

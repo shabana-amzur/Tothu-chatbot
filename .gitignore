@@ -48,6 +48,29 @@ wheels/
 .AppleDouble
 .LSOverride
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Backup and temporary files
+*.bak
+*.old
+*.tmp
+*.backup
+auth_old.py
+auth_new.py
+auth_fixed.py
+auth_clean.py
+app.py
+auth.py
+*.html.old
+*.html.backup
+*.py.backup
+
 # Streamlit
 .streamlit/
 
