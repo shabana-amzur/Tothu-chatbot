@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tothu - AI Chat</title>
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- KaTeX for LaTeX formula rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -507,6 +520,115 @@
             display: none !important;
         }
         
+        /* Rich Content Styles */
+        .message-content pre {
+            background: #1E1E1E;
+            border: 1px solid #3A3A3A;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        
+        .message-content code {
+            background: #2A2A2A;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .message-content pre code {
+            background: transparent;
+            padding: 0;
+            display: block;
+        }
+        
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+            background: #1A1A1A;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .message-content table th,
+        .message-content table td {
+            border: 1px solid #3A3A3A;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .message-content table th {
+            background: #2A2A2A;
+            font-weight: 600;
+        }
+        
+        .message-content table tr:hover {
+            background: #252525;
+        }
+        
+        .message-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        
+        .message-content video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        
+        .message-content blockquote {
+            border-left: 3px solid #0A84FF;
+            padding-left: 12px;
+            margin: 8px 0;
+            color: #8E8E93;
+        }
+        
+        .message-content a {
+            color: #0A84FF;
+            text-decoration: none;
+        }
+        
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+        
+        .message-content ul,
+        .message-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+        
+        .message-content li {
+            margin: 4px 0;
+        }
+        
+        .message-content h1, .message-content h2, .message-content h3,
+        .message-content h4, .message-content h5, .message-content h6 {
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+        
+        .message-content h1 { font-size: 24px; }
+        .message-content h2 { font-size: 20px; }
+        .message-content h3 { font-size: 18px; }
+        
+        .message-content .katex {
+            font-size: 1.1em;
+        }
+        
+        .message-content hr {
+            border: none;
+            border-top: 1px solid #3A3A3A;
+            margin: 16px 0;
+        }
+        
         /* Signup Page */
         .signup-container {
             display: none;
@@ -668,6 +790,20 @@
     </div>
     
     <script>
+        // Configure marked.js options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return code;
+            },
+            breaks: true,
+            gfm: true
+        });
+        
         const API_URL = 'http://localhost:8000';
         let token = localStorage.getItem('token');
         
@@ -951,7 +1087,81 @@
         
         async function loadChatHistory() {
             try {
-                const response = await fetch(`${API_URL}/chats`, {
+                // Load conversations from backend
+                const response = await fetch(`${API_URL}/conversations`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    conversations = await response.json();
+                    loadConversationsList();
+                }
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+        
+        // Conversation Management
+        function loadConversationsList() {
+            chatHistory.innerHTML = '';
+            conversations.forEach((conv, index) => {
+                const item = document.createElement('div');
+                item.className = 'chat-history-item' + (conv.id === currentConversationId ? ' active' : '');
+                item.innerHTML = `
+                    <span class="chat-title">${conv.title}</span>
+                    <div class="chat-actions">
+                        <button class="delete-chat-btn" data-id="${conv.id}">🗑️</button>
+                    </div>
+                `;
+                item.onclick = (e) => {
+                    if (!e.target.classList.contains('delete-chat-btn')) {
+                        loadConversation(index);
+                    }
+                };
+                chatHistory.appendChild(item);
+            });
+            
+            // Add delete button event listeners
+            document.querySelectorAll('.delete-chat-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const convId = parseInt(btn.dataset.id);
+                    await deleteConversation(convId);
+                });
+            });
+        }
+        
+        async function createNewConversation() {
+            try {
+                const response = await fetch(`${API_URL}/conversations`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title: 'New Chat' })
+                });
+                
+                if (response.ok) {
+                    const newConv = await response.json();
+                    conversations.unshift(newConv);
+                    currentConversationId = newConv.id;
+                    loadConversationsList();
+                    clearMessages();
+                    document.getElementById('chatTitle').textContent = newConv.title;
+                }
+            } catch (error) {
+                console.error('Error creating conversation:', error);
+            }
+        }
+        
+        async function loadConversation(index) {
+            currentConversationId = conversations[index].id;
+            document.getElementById('chatTitle').textContent = conversations[index].title;
+            
+            // Load messages for this conversation
+            try {
+                const response = await fetch(`${API_URL}/conversations/${currentConversationId}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -967,116 +1177,71 @@
                     scrollToBottom();
                 }
             } catch (error) {
-                console.error('Error loading chat history:', error);
+                console.error('Error loading conversation messages:', error);
             }
             
-            // Load conversation history for sidebar
             loadConversationsList();
         }
         
-        // Conversation Management
-        function loadConversationsList() {
-            chatHistory.innerHTML = '';
-            conversations.forEach((conv, index) => {
-                const item = document.createElement('div');
-                item.className = 'chat-history-item' + (conv.id === currentConversationId ? ' active' : '');
-                item.innerHTML = `
-                    <span class="chat-title">${conv.title}</span>
-                    <div class="chat-actions">
-                        <button class="delete-chat-btn" onclick="deleteConversation(${index})">🗑️</button>
-                    </div>
-                `;
-                item.onclick = (e) => {
-                    if (!e.target.classList.contains('delete-chat-btn')) {
-                        loadConversation(index);
-                    }
-                };
-                chatHistory.appendChild(item);
-            });
-        }
-        
-        function createNewConversation() {
-            const newConv = {
-                id: Date.now(),
-                title: 'New Chat',
-                messages: []
-            };
-            conversations.unshift(newConv);
-            currentConversationId = newConv.id;
-            localStorage.setItem('conversations', JSON.stringify(conversations));
-            loadConversationsList();
-            clearMessages();
-            document.getElementById('chatTitle').textContent = 'New Chat';
-        }
-        
-        function loadConversation(index) {
-            currentConversationId = conversations[index].id;
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
+        async function deleteConversation(convId) {
+            if (!confirm('Delete this conversation?')) return;
             
-            conversations[index].messages.forEach(msg => {
-                addMessageToUI(msg.role, msg.content);
-            });
-            
-            document.getElementById('chatTitle').textContent = conversations[index].title;
-            loadConversationsList();
-            scrollToBottom();
-        }
-        
-        function deleteConversation(index) {
-            if (confirm('Delete this conversation?')) {
-                const deletedId = conversations[index].id;
-                conversations.splice(index, 1);
-                localStorage.setItem('conversations', JSON.stringify(conversations));
+            try {
+                const response = await fetch(`${API_URL}/conversations/${convId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 
-                if (deletedId === currentConversationId) {
-                    if (conversations.length > 0) {
-                        loadConversation(0);
-                    } else {
-                        createNewConversation();
+                if (response.ok) {
+                    // Remove from local array
+                    const index = conversations.findIndex(c => c.id === convId);
+                    if (index !== -1) {
+                        conversations.splice(index, 1);
                     }
+                    
+                    // Handle if we deleted the current conversation
+                    if (convId === currentConversationId) {
+                        if (conversations.length > 0) {
+                            await loadConversation(0);
+                        } else {
+                            await createNewConversation();
+                        }
+                    }
+                    
+                    loadConversationsList();
                 }
-                loadConversationsList();
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
             }
         }
         
-        function clearCurrentChat() {
-            if (confirm('Clear this conversation?')) {
-                const index = conversations.findIndex(c => c.id === currentConversationId);
-                if (index !== -1) {
-                    conversations[index].messages = [];
-                    localStorage.setItem('conversations', JSON.stringify(conversations));
-                    clearMessages();
-                }
-            }
+        async function clearCurrentChat() {
+            if (!currentConversationId) return;
+            await deleteConversation(currentConversationId);
+            await createNewConversation();
         }
         
-        function clearAllConversations() {
-            if (confirm('Delete all conversations? This cannot be undone.')) {
+        async function clearAllConversations() {
+            if (!confirm('Delete all conversations? This cannot be undone.')) return;
+            
+            try {
+                // Delete all conversations
+                for (const conv of conversations) {
+                    await fetch(`${API_URL}/conversations/${conv.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+                
                 conversations = [];
-                localStorage.setItem('conversations', JSON.stringify(conversations));
-                createNewConversation();
+                await createNewConversation();
+            } catch (error) {
+                console.error('Error clearing all conversations:', error);
             }
         }
         
         function clearMessages() {
             document.getElementById('messages').innerHTML = '';
-        }
-        
-        function saveMessageToConversation(role, content) {
-            const index = conversations.findIndex(c => c.id === currentConversationId);
-            if (index !== -1) {
-                conversations[index].messages.push({ role, content });
-                
-                // Update title with first user message
-                if (role === 'user' && conversations[index].messages.length === 1) {
-                    conversations[index].title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
-                    document.getElementById('chatTitle').textContent = conversations[index].title;
-                }
-                
-                localStorage.setItem('conversations', JSON.stringify(conversations));
-                loadConversationsList();
-            }
         }
         
         async function sendMessage() {
@@ -1085,11 +1250,10 @@
             
             // Create new conversation if needed
             if (!currentConversationId || conversations.length === 0) {
-                createNewConversation();
+                await createNewConversation();
             }
             
             addMessageToUI('user', message);
-            saveMessageToConversation('user', message);
             messageInput.value = '';
             
             const loadingDiv = document.getElementById('loading');
@@ -1102,22 +1266,36 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({ 
+                        message,
+                        conversation_id: currentConversationId 
+                    })
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
                     addMessageToUI('assistant', data.assistant_message.content);
-                    saveMessageToConversation('assistant', data.assistant_message.content);
+                    
+                    // Update conversation ID if it was newly created
+                    if (data.conversation_id && data.conversation_id !== currentConversationId) {
+                        currentConversationId = data.conversation_id;
+                    }
+                    
+                    // Reload conversations list to get updated title
+                    await loadChatHistory();
+                    
+                    // Update current conversation title if it changed
+                    const currentConv = conversations.find(c => c.id === currentConversationId);
+                    if (currentConv) {
+                        document.getElementById('chatTitle').textContent = currentConv.title;
+                    }
                 } else {
                     const errorMsg = 'Sorry, I encountered an error processing your request.';
                     addMessageToUI('assistant', errorMsg);
-                    saveMessageToConversation('assistant', errorMsg);
                 }
             } catch (error) {
                 const errorMsg = 'Connection error. Please try again.';
                 addMessageToUI('assistant', errorMsg);
-                saveMessageToConversation('assistant', errorMsg);
             } finally {
                 loadingDiv.classList.add('hidden');
             }
@@ -1129,11 +1307,38 @@
             messageDiv.className = `message ${role}`;
             
             const avatar = role === 'user' ? '👤' : '🤖';
+            
+            // Parse markdown and render rich content
+            const renderedContent = marked.parse(content, {
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false
+            });
+            
             messageDiv.innerHTML = `
                 <div class="message-avatar">${avatar}</div>
-                <div class="message-content">${content}</div>
+                <div class="message-content">${renderedContent}</div>
             `;
+            
             messagesDiv.appendChild(messageDiv);
+            
+            // Apply syntax highlighting to code blocks
+            messageDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+            
+            // Render LaTeX formulas
+            renderMathInElement(messageDiv, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '\\(', right: '\\)', display: false}
+                ],
+                throwOnError: false
+            });
+            
             scrollToBottom();
         }
         
